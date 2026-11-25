@@ -12,66 +12,67 @@ auth_bp = Blueprint('auth', __name__)
 EMAIL_REGEX = re.compile(r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-]+$")
 USERNAME_REGEX = re.compile(r"^[a-zA-Z0-9_.-]{3,20}$")
 
+
 def validate_auth(data, is_signup=True):
-
     if not isinstance(data, dict) or not data:
-        return jsonify({
-            "error": "Invalid input. Please provide a valid JSON object."
-        }), 400
+        return None, (jsonify({
+            "error": "Invalid input data. Expected a non-empty JSON object."
+        }), 400)
 
-    username = data.get('username') if is_signup else None
     email = data.get('email')
     password = data.get('password')
 
     if not isinstance(email, str) or not isinstance(password, str):
-        return jsonify({
-            "error": "Invalid input. Please provide valid string values"
-        }), 400
+        return None, (jsonify({
+            "error": "Invalid email or password. Expected string values."
+        }), 400)
 
     email = email.strip().lower()
 
     if not EMAIL_REGEX.match(email):
-        return jsonify({
-            "error": "Invalid email format. Please provide a valid email address."
-        }), 400
+        return None, (jsonify({
+            "error": "Invalid email format."
+        }), 400)
 
     if not password or not password.strip():
-        return jsonify({
-            "error": "Invalid input. Please provide non-empty values"
-        }), 400
+        return None, (jsonify({
+            "error": "Please provide a non-empty value for the password."
+        }), 400)
 
-    cleaned_data = {
+    cleaned_date = {
         "email": email,
         "password": password
     }
 
     if is_signup:
+        username = data.get('username')
 
-          username = data.get('username')
-          if not isinstance(username, str):
-                return jsonify({
-                    "error": "Invalid input. Please provide valid string values"
-                }), 400
+        if not isinstance(username, str):
+            return None, (jsonify({
+                "error": "Invalid username. Expected a string value."
+            }), 400)
 
-          username = username.strip()
-          if not USERNAME_REGEX.match(username):
-                return jsonify({
-                    "error": "Invalid username. Please provide a valid username."
-                }), 400  
+        username = username.strip()
+        if not USERNAME_REGEX.match(username):
+            return None, (jsonify({
+                "error": "Invalid username format. Username must be 3-20 characters long and can contain letters, numbers, underscores, hyphens, and periods."
+            }), 400)
 
-          if len(password) < 8:
-                return jsonify({
-                    "error": "Password must be at least 8 characters long."
-                }), 400
-        
-          if not re.search(r"[A-Za-z]", password) or not re.search(r'\d', password) or not re.search(r'[!@#$%^&*(),.?":{}|<>]', password):
-                return jsonify({
-                    "error": "Password must contain at least one letter and one number, and special character."
-                }), 400
+        if len(password) < 8:
+            return None, (jsonify({
+                "error": "Password must be at least 8 characters long."
+            }), 400)
 
-          cleaned_data["username"] = username
+        if not re.search(r"[A-Za-z]", password) or not re.search(r"\d", password) or not re.search(
+                r'[!@#$%^&*(),.?":{}|<>]', password):
+            return None, (jsonify({
+                "error": "Password must contain at least one letter and one number and special character."
+            }), 400)
 
-    return cleaned_data, None
+        cleaned_date["username"] = username
+
+    return cleaned_date, None
+
 
 @auth_bp.route('/signup', methods=['POST'])
 def signup():
